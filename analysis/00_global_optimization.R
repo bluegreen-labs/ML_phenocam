@@ -1,5 +1,5 @@
 # Feedback on startup
-message("Leave-Site-Out routine...")
+message("Global optimization, stratified across vegetation types...")
 
 # set both the R seed
 # and the torch seed (both function independently)
@@ -23,6 +23,9 @@ device <- torch::torch_device(
 df <- readRDS("data/ml_time_series_data.rds") |>
   dplyr::mutate(
     id = paste(site, veg_type)
+  ) |>
+  filter(
+    veg_type == "DB"
   )
 
 #--- stratification of data ----
@@ -136,17 +139,3 @@ luz_save(
                "global_model.pt")
   )
 )
-
-# # run the model on the test data
-# pred <- predict(fitted, test_dl)
-# pred <- (as.numeric(torch_tensor(pred, device = "cpu")) +
-#            train_center$GPP_NT_VUT_REF_mean) *
-#   train_center$GPP_NT_VUT_REF_sd
-#
-#
-# # save as a compressed RDS
-# saveRDS(
-#   leave_site_out_output,
-#   "data/leave_site_out_output.rds",
-#   compress = "xz"
-# )

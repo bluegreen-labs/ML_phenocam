@@ -29,9 +29,7 @@ rnn_model <- torch::nn_module(
       )
 
     # The fully connected standard neural
-    # net (can be split into sections using
-    # nn_sequential() as in the original python
-    # code, but this is cleaner)
+    # can be reduced to a single nn_linear()
     self$fc <-torch::nn_sequential(
       torch::nn_linear(hidden_size, 64),
       torch::nn_relu(),
@@ -43,15 +41,15 @@ rnn_model <- torch::nn_module(
     )
   },
 
-  forward = function(x, c) {
+  forward = function(x) {
 
-    # run the lstm squeeze out
+    # run the lstm, squeeze out
     # the additional unity dimension
     out <- self$lstm(x)[[1]]
 
     # stack the normal neural net
     # components on the lstm features
-    # and squeeze the data to comform
+    # and squeeze the data to conform
     # to the target output shape
     self$fc(out) |>
       torch::torch_squeeze(-1)

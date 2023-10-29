@@ -18,7 +18,7 @@ df <- df |>
   )
 
 df <- df |>
-  select(
+  dplyr::select(
     site,
     lat,
     lon,
@@ -27,6 +27,9 @@ df <- df |>
     roi_id,
     smooth_gcc_90,
     starts_with("daymet")
+  ) |>
+  dplyr::mutate(
+    smooth_gcc_90 = smooth_gcc_90 * 1000
   )
 
 # get soil characteristics

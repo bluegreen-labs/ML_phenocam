@@ -54,7 +54,7 @@ gcc_dataset <- torch::dataset(
       # normalize columns in input matrix
       # note that apply transposes the data
       # cols become rows (documented behaviour but uggh)
-      x <- t(apply(x, 1, function(x){(x - train_mean) / train_sd}))
+      self$x <- t(apply(x, 1, function(x){(x - train_mean) / train_sd}))
 
       # export data as torch tensor
       self$x <- torch_tensor(x)
