@@ -11,6 +11,7 @@ epochs <- 100 # for testing purposes, set to 150 for full run
 library(torch)
 library(luz)
 library(dplyr)
+library(ggplot2)
 source("R/rnn_model.R")
 source("R/gcc_dataset.R")
 
@@ -23,9 +24,6 @@ device <- torch::torch_device(
 df <- readRDS("data/ml_time_series_data.rds") |>
   dplyr::mutate(
     id = paste(site, veg_type)
-  ) |>
-  filter(
-    veg_type == "DB"
   )
 
 #--- stratification of data ----
@@ -63,7 +61,10 @@ train_center <- train |>
   summarise(
     across(
       where(is.numeric),
-      list(mean = mean, sd = sd)
+      list(
+        mean = mean,
+        sd = sd
+        )
     )
   ) |>
   select(
@@ -111,6 +112,29 @@ test_dl <- dataloader(
 
 #---- model fitting -----
 
+# create callback to plot
+# models stats
+plotter <- luz_callback(
+  "plotter",
+  failed = FALSE,
+  on_epoch_end = function() {
+    df <- read.csv("data/logs/logs.csv")
+    p <- ggplot(df) +
+      geom_line(
+        aes(
+          epoch,
+          loss
+        )
+      ) +
+      facet_grid(~set)
+    print(p)
+  }
+)
+
+# initialize callback
+# for plotting loss
+plot_log <- plotter()
+
 # fit the model by defining
 # a setup, setting parameters
 # and then initiating the fitting
@@ -118,7 +142,7 @@ fitted <- rnn_model |>
   setup(
     loss = nn_mse_loss(),
     optimizer = optim_adam,
-    metrics = list(luz_metric_mae())
+    metrics = list(luz_metric_mse())
   ) |>
   set_hparams(
     input_size = ncol(train_ds[1]$x),
@@ -127,7 +151,12 @@ fitted <- rnn_model |>
   ) |>
   fit(
     train_dl,
-    epochs = epochs
+    epochs = epochs,
+    callbacks = list(
+      luz::luz_callback_csv_logger(
+        file.path(here::here(),"data/logs/logs.csv")),
+      plot_log
+      )
   )
 
 # save model for this iteration

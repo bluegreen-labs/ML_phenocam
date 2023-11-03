@@ -120,8 +120,7 @@ train_dl <- train_dl |>
   dataloader_make_iter()
 
 i <- 1
-
-while( i < length(train_dl)) {
+while( i <= length(train_dl)) {
   i <- i + 1
 
   # subset iterator
@@ -129,12 +128,14 @@ while( i < length(train_dl)) {
     dataloader_next()
 
   # run the model on the test data
-  pred <- predict(fitted, subset)
-  pred <- (as.numeric(torch_tensor(pred, device = "cpu")) +
-              train_center$smooth_gcc_90_mean) *
-    train_center$smooth_gcc_90_sd
+  # run the model on the test data
+  pred <- as.numeric(predict(fitted, test_dl))
 
-  plot(pred)
+  # back convert centered data (should not be necessary update runs)
+  train_mean <- train_center$GPP_NT_VUT_REF_mean
+  train_sd <- train_center$GPP_NT_VUT_REF_sd
+  pred <- (pred * train_sd) + train_mean
+  print(pred)
 }
 
 

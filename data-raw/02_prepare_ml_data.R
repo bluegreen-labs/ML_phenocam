@@ -3,8 +3,29 @@ library(dplyr)
 library(tidyr)
 library(hwsdr)
 
+# site meta data
+site_meta_data <- phenocamr::list_sites() |>
+  select(
+    site,
+    flux_sitenames,
+    primary_veg_type
+  )
+
 # prepare the data for machine learning
 df <- readRDS("data-raw/raw_time_series_output.rds")
+
+# fluxes
+fluxes <- readRDS("data/rsofun_driver_data_clean.rds") |>
+  select(sitename, forcing) |>
+  unnest() |>
+  select(
+    sitename,
+    date,
+    gpp
+  ) |>
+  rename(
+    "flux_sitenames" = "sitename"
+  )
 
 # only retain required data
 df <- df |>
@@ -22,6 +43,7 @@ df <- df |>
     site,
     lat,
     lon,
+    date,
     elev,
     veg_type,
     roi_id,
@@ -75,6 +97,29 @@ hwsd_df <- df |>
 
 # merge soil data with climate and time series
 df <- left_join(df, hwsd_df)
+
+# merge meta-data
+df <- left_join(df, site_meta_data) |>
+  filter(
+    flux_sitenames != "",
+    !is.na(flux_sitenames),
+  ) |>
+  mutate(
+    date = as.Date(date)
+  )
+
+# merge with fluxes
+df <- inner_join(df, fluxes)
+
+# drop non primary veg types and flux site names
+df <- df |>
+  filter(
+    veg_type == primary_veg_type
+  ) |>
+  select(
+    -flux_sitenames,
+    -primary_veg_type
+  )
 
 # save ML data frame
 saveRDS(df, "data/ml_time_series_data.rds", compress = "xz")

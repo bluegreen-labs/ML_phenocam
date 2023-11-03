@@ -39,6 +39,16 @@ gcc_dataset <- torch::dataset(
       # forward unique index of sites to subset data
       self$sites <- unique(self$sitename)
 
+      # split out target (not centered)
+      y <- x |>
+        ungroup() |>
+        select(
+          gpp
+        ) |>
+        unlist()
+
+      self$y <- torch_tensor(y)
+
       # split out the numeric data for centering
       x <- x |>
         ungroup() |>
@@ -54,7 +64,7 @@ gcc_dataset <- torch::dataset(
       # normalize columns in input matrix
       # note that apply transposes the data
       # cols become rows (documented behaviour but uggh)
-      self$x <- t(apply(x, 1, function(x){(x - train_mean) / train_sd}))
+      x <- t(apply(x, 1, function(x){(x - train_mean) / train_sd}))
 
       # export data as torch tensor
       self$x <- torch_tensor(x)
@@ -71,8 +81,8 @@ gcc_dataset <- torch::dataset(
       # index l, and selecting the correct columns
       # for training data x, and target data y
       list(
-        x = self$x[l,2:ncol(self$x)],
-        y = self$x[l,1]
+        x = self$x[l,1:ncol(self$x)],
+        y = self$y[l]
       )
     },
 
