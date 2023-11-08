@@ -26,9 +26,9 @@ df_fluxes <- readRDS(here::here("data/leave_site_out_output_fluxes.rds"))
 # R squared and RMSE global
 statistics_global <- df_fluxes |>
   summarize(
-    R2_lstm = summary(lm(gpp ~ gpp_pred))$r.squared,
-    RMSE_lstm = sqrt(mean((gpp - gpp_pred)^2, na.rm = TRUE)),
-    MAE_lstm = abs(mean((gpp - gpp_pred), na.rm = TRUE))
+    R2 = summary(lm(gpp ~ gpp_pred))$r.squared,
+    RMSE = sqrt(mean((gpp - gpp_pred)^2, na.rm = TRUE)),
+    MAE = abs(mean((gpp - gpp_pred), na.rm = TRUE))
   ) |>
   round(3)
 
