@@ -100,23 +100,36 @@ Hufkens</h4>
     
     
 <div class="section level3">
-<h3 id="leave-site-out-analysis-fluxes">Leave-site-out analysis fluxes<a class="anchor" aria-label="anchor" href="#leave-site-out-analysis-fluxes"></a>
-</h3>
-<p>Due to more limited GPP data the analysis uses a leave-site-out
-(cross) validation. The data presented are the results of the model run
-for this site with this data unseen during model training.</p>
-<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-4d0bdd883c3c6a418fa3" style="width:auto;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-4d0bdd883c3c6a418fa3">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"R2":[0.762],"RMSE":[1.711],"MAE":[0.071]},"columns":[{"id":"R2","name":"R2","type":"numeric"},{"id":"RMSE","name":"RMSE","type":"numeric"},{"id":"MAE","name":"MAE","type":"numeric"}],"dataKey":"4bbab04af77c985c396b1167ba97a04f"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><p><img src="01_results_files/figure-html/unnamed-chunk-3-1.png" width="1344"></p>
-</div>
-<div class="section level3">
 <h3 id="gcc-predictions-from-climate-drivers">Gcc predictions from climate drivers<a class="anchor" aria-label="anchor" href="#gcc-predictions-from-climate-drivers"></a>
 </h3>
-<p>These are the test statistics on the out of sample sites for the
-global LSTM model parameterization. This data was unseen during
-training, and should be representative of the vegetation types in the
-full dataset.</p>
-<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-c1e5027c08e20a19b8fd" style="width:auto;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-c1e5027c08e20a19b8fd">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"R2":[0.705],"RMSE":[21.131],"MAE":[1.901]},"columns":[{"id":"R2","name":"R2","type":"numeric"},{"id":"RMSE","name":"RMSE","type":"numeric"},{"id":"MAE","name":"MAE","type":"numeric"}],"dataKey":"aa925823e76b405c7b90a644763ce324"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><p><img src="01_results_files/figure-html/unnamed-chunk-5-1.png" width="1344"></p>
+<p>For the first demo I’ll use daily Daymet data as provided by the
+<code>phenocamr</code> package for the location of each selected
+PhenoCam site. For consistency the data is normalized between 0 and 100,
+with lower and upper boundaries determined by the 0.25 and 0.95th
+quantile on the original data. This normalization removes site to site
+variation in signal strength as this is poorly defined across PhenoCam
+sites (i.e. Gcc is not an absolute physical measurement). The model
+structure used is an LSTM with two (2) layers and a few linear layers
+with ReLU rectifiers to increase model robustness. I ran 50 epochs with
+a 80 - 20 split on training and testing sites / data. Results for the
+test sites are shown below.</p>
+<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-14ce2d3f55411fd8c973" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-14ce2d3f55411fd8c973">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"R2":[0.705],"RMSE":[21.131],"MAE":[1.901]},"columns":[{"id":"R2","name":"R2","type":"numeric"},{"id":"RMSE","name":"RMSE","type":"numeric"},{"id":"MAE","name":"MAE","type":"numeric"}],"dataKey":"aa925823e76b405c7b90a644763ce324"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><p><img src="01_results_files/figure-html/unnamed-chunk-3-1.png" width="1344"></p>
+</div>
+<div class="section level3">
+<h3 id="leave-site-out-analysis-fluxes">Leave-site-out analysis fluxes<a class="anchor" aria-label="anchor" href="#leave-site-out-analysis-fluxes"></a>
+</h3>
+<p>In a second step I use the Gcc PhenoCam data as input, together with
+the climate data, but with GPP as a target. Due to limited overlap
+between PhenoCam sites and available GPP data no global optimization
+with an easy 80/20 data split can be applied. Therefore the analysis
+uses a leave-site-out (cross) validation. The data presented below are
+the results of the model run for the site mentioned, with this data
+unseen during model training (training on all remaining data). The same
+model structure as above is maintained, but only 25 epochs are run (to
+limit computational cost for the demo).</p>
+<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-588f821d900f9b2fc76e" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-588f821d900f9b2fc76e">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"R2":[0.762],"RMSE":[1.711],"MAE":[0.071]},"columns":[{"id":"R2","name":"R2","type":"numeric"},{"id":"RMSE","name":"RMSE","type":"numeric"},{"id":"MAE","name":"MAE","type":"numeric"}],"dataKey":"4bbab04af77c985c396b1167ba97a04f"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><p><img src="01_results_files/figure-html/unnamed-chunk-5-1.png" width="1344"></p>
 </div>
   </div>
 
