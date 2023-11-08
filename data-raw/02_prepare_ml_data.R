@@ -1,7 +1,8 @@
-# load required libraries
+# load required libraries and data
 library(dplyr)
 library(tidyr)
 library(hwsdr)
+source("R/normalize.R")
 
 # site meta data
 site_meta_data <- phenocamr::list_sites() |>
@@ -14,18 +15,7 @@ site_meta_data <- phenocamr::list_sites() |>
 # prepare the data for machine learning
 df <- readRDS("data-raw/raw_time_series_output.rds")
 
-# fluxes
-fluxes <- readRDS("data/rsofun_driver_data_clean.rds") |>
-  select(sitename, forcing) |>
-  unnest() |>
-  select(
-    sitename,
-    date,
-    gpp
-  ) |>
-  rename(
-    "flux_sitenames" = "sitename"
-  )
+#---- data wrangling bit ----
 
 # only retain required data
 df <- df |>
@@ -50,9 +40,16 @@ df <- df |>
     smooth_gcc_90,
     starts_with("daymet")
   ) |>
+  group_by(site) |>
   dplyr::mutate(
-    smooth_gcc_90 = smooth_gcc_90 * 1000
-  )
+    smooth_gcc_90 = normalize(smooth_gcc_90) * 100
+  ) |>
+  ungroup()
+
+# save normal GCC dataset
+saveRDS(df, "data/ml_time_series_data_gcc.rds", compress = "xz")
+
+break
 
 # get soil characteristics
 
@@ -108,6 +105,19 @@ df <- left_join(df, site_meta_data) |>
     date = as.Date(date)
   )
 
+# fluxes
+fluxes <- readRDS("data/rsofun_driver_data_clean.rds") |>
+  select(sitename, forcing) |>
+  unnest() |>
+  select(
+    sitename,
+    date,
+    gpp
+  ) |>
+  rename(
+    "flux_sitenames" = "sitename"
+  )
+
 # merge with fluxes
 df <- inner_join(df, fluxes)
 
@@ -122,4 +132,4 @@ df <- df |>
   )
 
 # save ML data frame
-saveRDS(df, "data/ml_time_series_data.rds", compress = "xz")
+saveRDS(df, "data/ml_time_series_data_fluxes.rds", compress = "xz")

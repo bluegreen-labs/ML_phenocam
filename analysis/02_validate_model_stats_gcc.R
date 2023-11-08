@@ -160,4 +160,12 @@ global_model_validation <- lapply(1:length(test_dl), function(i){
 
 })
 
+# bind all rows
 global_model_validation <- bind_rows(global_model_validation)
+
+# save as a compressed RDS
+saveRDS(
+  global_model_validation,
+  "data/global_model_gcc.rds",
+  compress = "xz"
+)

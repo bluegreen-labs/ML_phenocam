@@ -124,12 +124,18 @@ leave_site_out_output <- lapply(site_id, function(site){
 
   # add date for easy integration in
   # original data
-  date <- df |>
+  df <- df |>
     dplyr::filter(
       id == !!site
-    ) |>
+    )
+
+  date <- df |>
     dplyr::select(
-      date,
+      date
+    )
+
+  gpp <- df |>
+    dplyr::select(
       gpp
     )
 
@@ -137,6 +143,7 @@ leave_site_out_output <- lapply(site_id, function(site){
   return(data.frame(
     sitename = site,
     date = date,
+    gpp = gpp,
     gpp_pred = pred
   ))
 })
