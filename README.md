@@ -1,12 +1,18 @@
-# LSTM PhenoCam playground
+# Machine Learning PhenoCam playground
 
-This is a playground of LSTM models as applied to PhenoCam time series, predicting either Gcc values from Daymet climatic driver data or predicting GPP using the same Daymet climat drivers and Gcc as a constraint on phenology (rough stand in for fAPAR).
+This is a playground of Machine Learning (ML) models as applied to PhenoCam time series, predicting either Gcc values from Daymet climate driver data, or predicting GPP using the same Daymet climate drivers and Gcc as a constraint on phenology (rough stand in for fAPAR). The model architecture is identical in both cases, and relies on an LSTM model basis. As this only serves demonstration purposes, for now, no hyper-parameter tuning is applied (model structure is ad-hoc and can be wasteful on resources).
 
-## Setup
+## Use
 
-It is adviced to run this code on an accelerated setup (CUDA GPU). To ensure consistency across platforms, and not deal with a zoo of required CUDA drivers which can conflict due to platform and ML platforms already in use I suggest to use the included docker file (and environment). To install and use docker on your system I refer to the [docker documentation](https://www.docker.com/).
+### R project
+
+To run the project clone it locally and open the `Rproj` file in the RStudio IDE.
+
+Analysis scripts are stored in the `analysis` folder and should be run in sequence. It is adviced to run the analysis on an accelerated platform (GPU) rather than on CPU. The Dockerfile included with this project sets up a reproducible R environment to run all code (see below).
 
 ### Docker images
+
+It is adviced to run this code on an accelerated setup (CUDA GPU). To ensure consistency across platforms, and not deal with a zoo of required CUDA drivers which can conflict due to platform and ML platforms already in use I suggest to use the included docker file (and environment). To install and use docker on your system I refer to the [docker documentation](https://www.docker.com/).
 
 The dockerfile included provides a GPU torch setup. You can build
 this docker image using the below command. This will download the NVIDIA CUDA
@@ -32,8 +38,3 @@ above commands (but can and should be changed if the computer is exposed to a
 larger institutional network). This is not a secured setup, use a stronger password or a local firewall to avoid abuse.
 
 Data will be mounted in the docker virtual machine at `/workspace` and is fully accessible (writing and reading of files on your local file system).
-
-### Running the analysis
-
-Analysis scripts are stored in the `analysis` folder and should be run in sequence. Summary [results](https://geco-bern.github.io/mlflx2_R/articles/01_results.html) are automatically rendered using the vignettes in the `vignettes` folder.
-
