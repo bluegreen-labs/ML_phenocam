@@ -1,29 +1,39 @@
-# Project notes
+# LSTM PhenoCam playground
 
-When using a data loader data gets called by an index, this index can be a vector of multiple locations (a batch).
+This is a playground of LSTM models as applied to PhenoCam time series, predicting either Gcc values from Daymet climatic driver data or predicting GPP using the same Daymet climat drivers and Gcc as a constraint on phenology (rough stand in for fAPAR).
 
-The torch tensor will generally have the shape:
+## Setup
 
-{1, 300, 4}
+It is adviced to run this code on an accelerated setup (CUDA GPU). To ensure consistency across platforms, and not deal with a zoo of required CUDA drivers which can conflict due to platform and ML platforms already in use I suggest to use the included docker file (and environment). To install and use docker on your system I refer to the [docker documentation](https://www.docker.com/).
 
-for a batch size of one on a matrix of 300 rows and 4 columns.
+### Docker images
 
-When fitting the model the routine tries to concat all the data. However, torch tensors can only be concatted with varying dimensions along position 1.
+The dockerfile included provides a GPU torch setup. You can build
+this docker image using the below command. This will download the NVIDIA CUDA
+drivers for GPU support, the tidyverse, rstudio IDE and quarto publishing
+environment. Note that this setup will require some time to build given the
+the large downloads involved. Once build locally no further downloads will be
+required.
 
-This means that if the size of the tensors is not the same across batches (i.e. varying columns), this will fail.
-
-```r
-output <- predict(fit, dataloader)
+```
+# In the main project directory run
+docker build -f Dockerfile -t rocker-torch .
 ```
 
-will not return stuff
+To spin up a GPU docker image use in the project directory:
 
-You need to use the data loader iterator to step through all the data manually and gather the results this way.
+```
+docker run --gpus all -e PASSWORD="rstudio" -p 5656:8787 -v $(pwd):/workspace rocker-torch
+```
 
-ISSUE:
+In any browser use the [http://localhost:5656](http://localhost:5656) 
+url to access the docker RStudio Server instance which should be running. The password to the RStudio Server instance is set to `rstudio` when using the
+above commands (but can and should be changed if the computer is exposed to a
+larger institutional network). This is not a secured setup, use a stronger password or a local firewall to avoid abuse.
 
-It is unclear if the same issue plays out when running the optimization. Although no errors are returned they might be hidden. Tests on the LSTM GPP model returns worse model results and this might be the reason.
+Data will be mounted in the docker virtual machine at `/workspace` and is fully accessible (writing and reading of files on your local file system).
 
-NOTE:
+### Running the analysis
 
-The LSTM structure for GPP prediction isn't ideal for phenology prediction due to the weak correlation between GCC and continuous environmental factors. This is more threshold behaviour not a physical / delayed response.
+Analysis scripts are stored in the `analysis` folder and should be run in sequence. Summary [results](https://geco-bern.github.io/mlflx2_R/articles/01_results.html) are automatically rendered using the vignettes in the `vignettes` folder.
+

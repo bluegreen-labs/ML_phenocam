@@ -5,7 +5,7 @@ message("Global optimization, stratified across vegetation types...")
 # and the torch seed (both function independently)
 set.seed(1)
 torch::torch_manual_seed(42)
-epochs <- 100 # for testing purposes, set to 150 for full run
+epochs <- 200
 
 # required libraries
 library(torch)
@@ -13,7 +13,7 @@ library(luz)
 library(dplyr)
 library(ggplot2)
 source("R/rnn_model.R")
-source("R/gcc_dataset.R")
+source("R/fluxes_dataset.R")
 
 # automatically use the GPU if available
 device <- torch::torch_device(
@@ -21,10 +21,11 @@ device <- torch::torch_device(
   )
 
 # read in data, only retain relevant features
-df <- readRDS("data/ml_time_series_data.rds") |>
+df <- readRDS("data/ml_time_series_data_fluxes.rds") |>
   dplyr::mutate(
     id = paste(site, veg_type)
-  )
+  ) |>
+  as.data.frame()
 
 #--- stratification of data ----
 
@@ -38,7 +39,7 @@ split <-  df |>
   dplyr::select(veg_type, id) |>
   unique() |>
   rsample::initial_split(
-  0.8,
+  0.5,
   strata = "veg_type"
   )
 
@@ -76,7 +77,7 @@ train_center <- train |>
 # format torch data loader
 # for training data
 train_ds <- train |>
-  gcc_dataset(
+  fluxes_dataset(
     train_center
   )
 
@@ -86,7 +87,7 @@ test_ds <- df |>
   dplyr::filter(
     !(id %in% site_id)
   ) |>
-  gcc_dataset(
+  fluxes_dataset(
     train_center
   )
 
@@ -118,7 +119,7 @@ plotter <- luz_callback(
   "plotter",
   failed = FALSE,
   on_epoch_end = function() {
-    df <- read.csv("data/logs/logs.csv")
+    df <- read.csv("data/logs/logs_fluxes.csv")
     p <- ggplot(df) +
       geom_line(
         aes(
@@ -146,7 +147,7 @@ fitted <- rnn_model |>
   ) |>
   set_hparams(
     input_size = ncol(train_ds[1]$x),
-    hidden_size = 256,
+    hidden_size = 128,
     output_size = 1
   ) |>
   fit(
@@ -154,7 +155,7 @@ fitted <- rnn_model |>
     epochs = epochs,
     callbacks = list(
       luz::luz_callback_csv_logger(
-        file.path(here::here(),"data/logs/logs.csv")),
+        file.path(here::here(),"data/logs/logs_fluxes.csv")),
       plot_log
       )
   )
@@ -164,7 +165,6 @@ fitted <- rnn_model |>
 luz_save(
   fitted,
   file.path(
-    here::here("data/leave_site_out_weights/",
-               "global_model.pt")
+    here::here("data/global_model.pt")
   )
 )

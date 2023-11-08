@@ -33,11 +33,7 @@ rnn_model <- torch::nn_module(
     self$fc <-torch::nn_sequential(
       torch::nn_linear(hidden_size, 64),
       torch::nn_relu(),
-      torch::nn_linear(64, 32),
-      torch::nn_relu(),
-      torch::nn_linear(32, 16),
-      torch::nn_relu(),
-      torch::nn_linear(16, output_size)
+      torch::nn_linear(64, output_size)
     )
   },
 

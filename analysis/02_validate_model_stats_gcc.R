@@ -5,13 +5,12 @@ message("Running the model on the test data...")
 # and the torch seed (both function independently)
 set.seed(1)
 torch::torch_manual_seed(42)
-epochs <- 10 # for testing purposes, set to 150 for full run
+fraction <- 0.8
 
 # required libraries
 library(torch)
 library(luz)
 library(dplyr)
-source("R/rnn_model.R")
 source("R/gcc_dataset.R")
 
 # automatically use the GPU if available
@@ -20,10 +19,11 @@ device <- torch::torch_device(
 )
 
 # read in data, only retain relevant features
-df <- readRDS("data/ml_time_series_data.rds") |>
+df <- readRDS("data/ml_time_series_data_gcc.rds") |>
   dplyr::mutate(
     id = paste(site, veg_type)
-  )
+  ) |>
+  as.data.frame()
 
 #--- stratification of data ----
 
@@ -37,14 +37,11 @@ split <-  df |>
   dplyr::select(veg_type, id) |>
   unique() |>
   rsample::initial_split(
-    0.8,
+    fraction,
     strata = "veg_type"
   )
 
 site_id <- split$data[split$in_id, "id"]
-
-sites <- unique(df$id)
-test_sites <- sites[!(sites %in% site_id)]
 
 # split routine in training and testing,
 # training will be further divided in
@@ -57,17 +54,22 @@ train <- df |>
     id %in% site_id
   )
 
+# grab test_site names
+train_sites <- unique(train$site)
+
 # calculated mean / sd to center
 # the data
 train_center <- train |>
   summarise(
     across(
       where(is.numeric),
-      list(mean = mean, sd = sd)
+      list(
+        mean = mean,
+        sd = sd
+      )
     )
   ) |>
   select(
-    starts_with("smooth"),
     starts_with("daymet")
   ) |>
   ungroup()
@@ -79,13 +81,20 @@ train_ds <- train |>
     train_center
   )
 
+# grab test_site names
+train_sites <- unique(train$site)
+
 # format torch data loader
 # for test data
-test_ds <- df |>
+test <- df |>
   dplyr::filter(
-    !(id %in% site_id),
-    #id == "bbc2 DB"
-  ) |>
+    !(id %in% site_id)
+  )
+
+# grab test_site names
+test_sites <- unique(test$site)
+
+test_ds <- test |>
   gcc_dataset(
     train_center
   )
@@ -101,7 +110,7 @@ test_ds <- df |>
 train_dl <- dataloader(
   train_ds,
   batch_size = 1,
-  shuffle = TRUE
+  shuffle = FALSE
 )
 
 test_dl <- dataloader(
@@ -114,34 +123,41 @@ test_dl <- dataloader(
 
 # # save model for this iteration
 # # i.e. site left out
-fitted <- luz_load("data/global_model.pt")
+fitted <- luz_load("data/global_model_gcc.pt")
 
-train_dl <- train_dl |>
+test_dl <- test_dl |>
   dataloader_make_iter()
 
-i <- 1
-while( i <= length(train_dl)) {
-  i <- i + 1
+i <- 0
+
+global_model_validation <- lapply(1:length(test_dl), function(i){
 
   # subset iterator
-  subset <- train_dl |>
+  subset <- test_dl |>
     dataloader_next()
 
-  # run the model on the test data
-  # run the model on the test data
-  pred <- as.numeric(predict(fitted, test_dl))
+  # run model
+  pred <- predict(fitted, subset)
 
-  # back convert centered data (should not be necessary update runs)
-  train_mean <- train_center$GPP_NT_VUT_REF_mean
-  train_sd <- train_center$GPP_NT_VUT_REF_sd
-  pred <- (pred * train_sd) + train_mean
-  print(pred)
-}
+  # convert to cpu memory
+  pred <- try(as.numeric(torch_tensor(pred, device = "cpu")))
 
+  i <<- i + 1
 
-# # save as a compressed RDS
-# saveRDS(
-#   leave_site_out_output,
-#   "data/leave_site_out_output.rds",
-#   compress = "xz"
-# )
+  df_subset <- test |>
+    filter(
+      site == test_sites[i]
+    )
+
+  df_subset$gcc_pred <- pred
+
+  df_subset <- df_subset |>
+    mutate(
+      date = as.Date(date)
+    )
+
+  return(df_subset)
+
+})
+
+global_model_validation <- bind_rows(global_model_validation)

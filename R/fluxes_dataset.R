@@ -6,7 +6,7 @@
 #' @return torch tensor for model training
 #' @export
 
-gcc_dataset <- torch::dataset(
+fluxes_dataset <- torch::dataset(
     name = "dataset",
     initialize = function(
       x,
@@ -33,7 +33,7 @@ gcc_dataset <- torch::dataset(
 
       # pass on the sitename to constrain the subset
       self$sitename <- x |>
-        dplyr::select("site") |>
+        dplyr::select("id") |>
         unlist()
 
       # forward unique index of sites to subset data
@@ -43,7 +43,7 @@ gcc_dataset <- torch::dataset(
       y <- x |>
         ungroup() |>
         select(
-          starts_with("smooth")
+          gpp
         ) |>
         unlist()
 
@@ -53,6 +53,7 @@ gcc_dataset <- torch::dataset(
       x <- x |>
         ungroup() |>
         select(
+          starts_with("smooth"),
           starts_with("daymet")
         )
 
