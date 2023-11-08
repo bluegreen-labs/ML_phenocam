@@ -15,60 +15,9 @@ library(reactable)
 options(dplyr.summarise.inform = FALSE)
 ```
 
-### Leave-site-out analysis fluxes
-
-Due to more limited GPP data the analysis uses a leave-site-out (cross) validation. The data presented are the results of the model run for this site with this data unseen during model training.
-
-```{r echo = FALSE, warning = FALSE, message=FALSE}
-# read in the modelled data
-df_fluxes <- readRDS(here::here("data/leave_site_out_output_fluxes.rds"))
-
-# R squared and RMSE global
-statistics_global <- df_fluxes |>
-  summarize(
-    R2 = summary(lm(gpp ~ gpp_pred))$r.squared,
-    RMSE = sqrt(mean((gpp - gpp_pred)^2, na.rm = TRUE)),
-    MAE = abs(mean((gpp - gpp_pred), na.rm = TRUE))
-  ) |>
-  round(3)
-
-reactable::reactable(statistics_global)
-```
-
-```{r echo = FALSE, warning=FALSE, fig.height = 14, fig.width = 14}
-  
-# plot all validation graphs
-p <- ggplot(df_fluxes) +
-  geom_line(
-    aes(
-      date,
-      gpp
-    )
-  ) +
-  geom_line(
-    aes(
-      date,
-      gpp_pred
-    ),
-    colour = "red"
-  ) +
-  labs(
-    x = "",
-    y = "GPP"
-  ) +
-  theme_bw() +
-  facet_wrap(
-    ~ sitename,
-    ncol = 2
-    )
-
-print(p)
-```
-
 ### Gcc predictions from climate drivers
 
-These are the test statistics on the out of sample sites for the global LSTM model parameterization. This data was unseen during training, and should be representative of the vegetation types in the full dataset.
-
+For the first demo I'll use daily Daymet data as provided by the `phenocamr` package for the location of each selected PhenoCam site. For consistency the data is normalized between 0 and 100, with lower and upper boundaries determined by the 0.25 and 0.95th quantile on the original data. This normalization removes site to site variation in signal strength as this is poorly defined across PhenoCam sites (i.e. Gcc is not an absolute physical measurement). The model structure used is an LSTM with two (2) layers and a few linear layers with ReLU rectifiers to increase model robustness. I ran 50 epochs with a 80 - 20 split on training and testing sites / data. Results for the test sites are shown below.
 
 ```{r echo = FALSE, warning = FALSE, message=FALSE}
 # read in the modelled data
@@ -110,6 +59,56 @@ p <- ggplot(df_fluxes) +
   theme_bw() +
   facet_wrap(
     ~ id,
+    ncol = 2
+    )
+
+print(p)
+```
+
+### Leave-site-out analysis fluxes
+
+In a second step I use the Gcc PhenoCam data as input, together with the climate data, but with GPP as a target. Due to limited overlap between PhenoCam sites and available GPP data no global optimization with an easy 80/20 data split can be applied. Therefore the analysis uses a leave-site-out (cross) validation. The data presented below are the results of the model run for the site mentioned, with this data unseen during model training (training on all remaining data). The same model structure as above is maintained, but only 25 epochs are run (to limit computational cost for the demo).
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+# read in the modelled data
+df_fluxes <- readRDS(here::here("data/leave_site_out_output_fluxes.rds"))
+
+# R squared and RMSE global
+statistics_global <- df_fluxes |>
+  summarize(
+    R2 = summary(lm(gpp ~ gpp_pred))$r.squared,
+    RMSE = sqrt(mean((gpp - gpp_pred)^2, na.rm = TRUE)),
+    MAE = abs(mean((gpp - gpp_pred), na.rm = TRUE))
+  ) |>
+  round(3)
+
+reactable::reactable(statistics_global)
+```
+
+```{r echo = FALSE, warning=FALSE, fig.height = 14, fig.width = 14}
+  
+# plot all validation graphs
+p <- ggplot(df_fluxes) +
+  geom_line(
+    aes(
+      date,
+      gpp
+    )
+  ) +
+  geom_line(
+    aes(
+      date,
+      gpp_pred
+    ),
+    colour = "red"
+  ) +
+  labs(
+    x = "",
+    y = "GPP"
+  ) +
+  theme_bw() +
+  facet_wrap(
+    ~ sitename,
     ncol = 2
     )
 
