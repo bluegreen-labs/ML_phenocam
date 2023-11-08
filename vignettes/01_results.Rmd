@@ -1,0 +1,117 @@
+---
+title: "Results"
+author: "Koen Hufkens"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Results}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(reactable)
+options(dplyr.summarise.inform = FALSE)
+```
+
+### Leave-site-out analysis fluxes
+
+Due to more limited GPP data the analysis uses a leave-site-out (cross) validation. The data presented are the results of the model run for this site with this data unseen during model training.
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+# read in the modelled data
+df_fluxes <- readRDS(here::here("data/leave_site_out_output_fluxes.rds"))
+
+# R squared and RMSE global
+statistics_global <- df_fluxes |>
+  summarize(
+    R2_lstm = summary(lm(gpp ~ gpp_pred))$r.squared,
+    RMSE_lstm = sqrt(mean((gpp - gpp_pred)^2, na.rm = TRUE)),
+    MAE_lstm = abs(mean((gpp - gpp_pred), na.rm = TRUE))
+  ) |>
+  round(3)
+
+reactable::reactable(statistics_global)
+```
+
+```{r echo = FALSE, warning=FALSE, fig.height = 14, fig.width = 14}
+  
+# plot all validation graphs
+p <- ggplot(df_fluxes) +
+  geom_line(
+    aes(
+      date,
+      gpp
+    )
+  ) +
+  geom_line(
+    aes(
+      date,
+      gpp_pred
+    ),
+    colour = "red"
+  ) +
+  labs(
+    x = "",
+    y = "GPP"
+  ) +
+  theme_bw() +
+  facet_wrap(
+    ~ sitename,
+    ncol = 2
+    )
+
+print(p)
+```
+
+### Gcc predictions from climate drivers
+
+These are the test statistics on the out of sample sites for the global LSTM model parameterization. This data was unseen during training, and should be representative of the vegetation types in the full dataset.
+
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+# read in the modelled data
+df_fluxes <- readRDS(here::here("data/global_model_gcc.rds"))
+
+# R squared and RMSE global
+statistics_global <- df_fluxes |>
+  summarize(
+    R2 = summary(lm(smooth_gcc_90 ~ gcc_pred))$r.squared,
+    RMSE = sqrt(mean((smooth_gcc_90 - gcc_pred)^2, na.rm = TRUE)),
+    MAE = abs(mean((smooth_gcc_90 - gcc_pred), na.rm = TRUE))
+  ) |>
+  round(3)
+
+reactable::reactable(statistics_global)
+```
+
+```{r echo = FALSE, warning=FALSE, fig.height = 20, fig.width = 14}
+  
+# plot all validation graphs
+p <- ggplot(df_fluxes) +
+  geom_line(
+    aes(
+      date,
+      smooth_gcc_90
+    )
+  ) +
+  geom_line(
+    aes(
+      date,
+      gcc_pred
+    ),
+    colour = "red"
+  ) +
+  labs(
+    x = "",
+    y = "GPP"
+  ) +
+  theme_bw() +
+  facet_wrap(
+    ~ id,
+    ncol = 2
+    )
+
+print(p)
+```
