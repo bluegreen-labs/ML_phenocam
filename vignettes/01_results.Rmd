@@ -17,7 +17,11 @@ options(dplyr.summarise.inform = FALSE)
 
 ### Gcc predictions from climate drivers
 
+#### Normalized data
+
 For the first demo I'll use daily Daymet data as provided by the `phenocamr` package for the location of each selected PhenoCam site. For consistency the data is normalized between 0 and 100, with lower and upper boundaries determined by the 0.25 and 0.95th quantile on the original data. This normalization removes site to site variation in signal strength as this is poorly defined across PhenoCam sites (i.e. Gcc is not an absolute physical measurement). The model structure used is an LSTM with two (2) layers and a few linear layers with ReLU rectifiers to increase model robustness. I ran 50 epochs with a 80 - 20 split on training and testing sites / data. Results for the test sites are shown below.
+
+Some quick observations show that the model does not only capture temperature based components, but also includes precipitation. This can be observed in the shrubland and grassland sites which show depressed Gcc values (in otherwise mostly hot climates). Due to the scaling of the data between 0 - 100 for all sites the results might be less reliable - as it inflates values for low cover sites. Setting a fixed baseline of zero, while retaining the amplitude of the original series, might yield better results.
 
 ```{r echo = FALSE, warning = FALSE, message=FALSE}
 # read in the modelled data
@@ -64,8 +68,57 @@ p <- ggplot(df_fluxes) +
 
 print(p)
 ```
+#### Baseline correction data
 
-### Leave-site-out analysis fluxes
+With only the baseline correction things go off the rails, with responses improperly scaling. Additional variables might resolve this (in particular vegetation type), but overall it shows that PhenoCam's non radiometric nature might be an obstacle.
+
+```{r echo = FALSE, warning = FALSE, message=FALSE}
+# read in the modelled data
+df_fluxes <- readRDS(here::here("data/global_model_gcc_baseline.rds"))
+
+# R squared and RMSE global
+statistics_global <- df_fluxes |>
+  summarize(
+    R2 = summary(lm(smooth_gcc_90 ~ gcc_pred))$r.squared,
+    RMSE = sqrt(mean((smooth_gcc_90 - gcc_pred)^2, na.rm = TRUE)),
+    MAE = abs(mean((smooth_gcc_90 - gcc_pred), na.rm = TRUE))
+  ) |>
+  round(3)
+
+reactable::reactable(statistics_global)
+```
+
+```{r echo = FALSE, warning=FALSE, fig.height = 20, fig.width = 14}
+  
+# plot all validation graphs
+p <- ggplot(df_fluxes) +
+  geom_line(
+    aes(
+      date,
+      smooth_gcc_90
+    )
+  ) +
+  geom_line(
+    aes(
+      date,
+      gcc_pred
+    ),
+    colour = "red"
+  ) +
+  labs(
+    x = "",
+    y = "GPP"
+  ) +
+  theme_bw() +
+  facet_wrap(
+    ~ id,
+    ncol = 2
+    )
+
+print(p)
+```
+
+### Leave-site-out analysis fluxes (normalized data)
 
 In a second step I use the Gcc PhenoCam data as input, together with the climate data, but with GPP as a target. Due to limited overlap between PhenoCam sites and available GPP data no global optimization with an easy 80/20 data split can be applied. Therefore the analysis uses a leave-site-out (cross) validation. The data presented below are the results of the model run for the site mentioned, with this data unseen during model training (training on all remaining data). The same model structure as above is maintained, but only 25 epochs are run (to limit computational cost for the demo).
 

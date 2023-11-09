@@ -17,7 +17,7 @@ df <- readRDS("data-raw/raw_time_series_output.rds")
 
 #---- data wrangling bit ----
 
-# only retain required data
+# only retain required data and kick out spruce sites
 df <- df |>
   rename(
     "daymet_daylength" = "dayl..s.",
@@ -26,6 +26,9 @@ df <- df |>
     "daymet_tmax"= "tmax..deg.c.",
     "daymet_tmin"= "tmin..deg.c.",
     "daymet_vp" = "vp..Pa."
+  ) |>
+  filter(
+    !grepl("spruce", site)
   )
 
 df <- df |>
@@ -39,15 +42,27 @@ df <- df |>
     roi_id,
     smooth_gcc_90,
     starts_with("daymet")
-  ) |>
+  )
+
+df_norm <- df |>
   group_by(site) |>
   dplyr::mutate(
     smooth_gcc_90 = normalize(smooth_gcc_90) * 100
   ) |>
   ungroup()
 
-# save normal GCC dataset
-saveRDS(df, "data/ml_time_series_data_gcc.rds", compress = "xz")
+df_baseline <- df |>
+  group_by(site) |>
+  dplyr::mutate(
+    smooth_gcc_90 = baseline(smooth_gcc_90) * 100
+  ) |>
+  ungroup()
+
+# save normalized GCC dataset
+saveRDS(df_norm, "data/ml_time_series_data_gcc.rds", compress = "xz")
+
+# save baseline GCC dataset
+saveRDS(df_baseline, "data/ml_time_series_data_gcc_baseline.rds", compress = "xz")
 
 break
 
@@ -60,7 +75,7 @@ path <- ws_download(
   verbose = TRUE
 )
 
-hwsd_df <- df |>
+hwsd_df <- df_norm |>
   select(site, lat, lon) |>
   unique() |>
   group_by(site) |>
@@ -93,7 +108,7 @@ hwsd_df <- df |>
   ungroup()
 
 # merge soil data with climate and time series
-df <- left_join(df, hwsd_df)
+df <- left_join(df_norm, hwsd_df)
 
 # merge meta-data
 df <- left_join(df, site_meta_data) |>
