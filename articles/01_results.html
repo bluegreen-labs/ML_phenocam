@@ -102,6 +102,9 @@ Hufkens</h4>
 <div class="section level3">
 <h3 id="gcc-predictions-from-climate-drivers">Gcc predictions from climate drivers<a class="anchor" aria-label="anchor" href="#gcc-predictions-from-climate-drivers"></a>
 </h3>
+<div class="section level4">
+<h4 id="normalized-data">Normalized data<a class="anchor" aria-label="anchor" href="#normalized-data"></a>
+</h4>
 <p>For the first demo I’ll use daily Daymet data as provided by the
 <code>phenocamr</code> package for the location of each selected
 PhenoCam site. For consistency the data is normalized between 0 and 100,
@@ -113,11 +116,27 @@ structure used is an LSTM with two (2) layers and a few linear layers
 with ReLU rectifiers to increase model robustness. I ran 50 epochs with
 a 80 - 20 split on training and testing sites / data. Results for the
 test sites are shown below.</p>
-<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-a12256254848323a4d54" style="width:auto;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-a12256254848323a4d54">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"R2":[0.705],"RMSE":[21.131],"MAE":[1.901]},"columns":[{"id":"R2","name":"R2","type":"numeric"},{"id":"RMSE","name":"RMSE","type":"numeric"},{"id":"MAE","name":"MAE","type":"numeric"}],"dataKey":"aa925823e76b405c7b90a644763ce324"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><p><img src="01_results_files/figure-html/unnamed-chunk-3-1.png" width="1344"></p>
+<p>Some quick observations show that the model does not only capture
+temperature based components, but also includes precipitation. This can
+be observed in the shrubland and grassland sites which show depressed
+Gcc values (in otherwise mostly hot climates). Due to the scaling of the
+data between 0 - 100 for all sites the results might be less reliable -
+as it inflates values for low cover sites. Setting a fixed baseline of
+zero, while retaining the amplitude of the original series, might yield
+better results.</p>
+<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-843bfc678f5e3635af60" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-843bfc678f5e3635af60">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"R2":[0.648],"RMSE":[22.848],"MAE":[4.477]},"columns":[{"id":"R2","name":"R2","type":"numeric"},{"id":"RMSE","name":"RMSE","type":"numeric"},{"id":"MAE","name":"MAE","type":"numeric"}],"dataKey":"367db87b51eb265989aa1cf7055152b0"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><p><img src="01_results_files/figure-html/unnamed-chunk-3-1.png" width="1344">
+#### Baseline correction data</p>
+<p>With only the baseline correction things go off the rails, with
+responses improperly scaling. Additional variables might resolve this
+(in particular vegetation type), but overall it shows that PhenoCam’s
+non radiometric nature might be an obstacle.</p>
+<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-98e48c1575492e21d7b2" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-98e48c1575492e21d7b2">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"R2":[0.653],"RMSE":[39.84],"MAE":[29.763]},"columns":[{"id":"R2","name":"R2","type":"numeric"},{"id":"RMSE","name":"RMSE","type":"numeric"},{"id":"MAE","name":"MAE","type":"numeric"}],"dataKey":"68540dba2e994d711a9fd524b68fdfd6"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><p><img src="01_results_files/figure-html/unnamed-chunk-5-1.png" width="1344"></p>
+</div>
 </div>
 <div class="section level3">
-<h3 id="leave-site-out-analysis-fluxes">Leave-site-out analysis fluxes<a class="anchor" aria-label="anchor" href="#leave-site-out-analysis-fluxes"></a>
+<h3 id="leave-site-out-analysis-fluxes-normalized-data">Leave-site-out analysis fluxes (normalized data)<a class="anchor" aria-label="anchor" href="#leave-site-out-analysis-fluxes-normalized-data"></a>
 </h3>
 <p>In a second step I use the Gcc PhenoCam data as input, together with
 the climate data, but with GPP as a target. Due to limited overlap
@@ -128,8 +147,12 @@ the results of the model run for the site mentioned, with this data
 unseen during model training (training on all remaining data). The same
 model structure as above is maintained, but only 25 epochs are run (to
 limit computational cost for the demo).</p>
-<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-038f640a78e26fba3afc" style="width:auto;height:auto;"></div>
-<script type="application/json" data-for="htmlwidget-038f640a78e26fba3afc">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"R2":[0.762],"RMSE":[1.711],"MAE":[0.071]},"columns":[{"id":"R2","name":"R2","type":"numeric"},{"id":"RMSE","name":"RMSE","type":"numeric"},{"id":"MAE","name":"MAE","type":"numeric"}],"dataKey":"4bbab04af77c985c396b1167ba97a04f"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><p><img src="01_results_files/figure-html/unnamed-chunk-5-1.png" width="1344"></p>
+<p>Agreement between model output and reference data is generally better
+than the Gcc estimates. Gcc tracks GPP reasonably well, so small changes
+based upon other environmental factors allow the model to capture much
+of this variability in GPP.</p>
+<div class="reactable html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-0dffbea41d2179ee9143" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-0dffbea41d2179ee9143">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"R2":[0.762],"RMSE":[1.711],"MAE":[0.071]},"columns":[{"id":"R2","name":"R2","type":"numeric"},{"id":"RMSE","name":"RMSE","type":"numeric"},{"id":"MAE","name":"MAE","type":"numeric"}],"dataKey":"4bbab04af77c985c396b1167ba97a04f"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script><p><img src="01_results_files/figure-html/unnamed-chunk-7-1.png" width="1344"></p>
 </div>
   </div>
 

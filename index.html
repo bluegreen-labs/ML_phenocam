@@ -88,7 +88,8 @@
 <div class="section level1">
 <div class="page-header"><h1 id="machine-learning-phenocam-playground">Machine Learning PhenoCam playground<a class="anchor" aria-label="anchor" href="#machine-learning-phenocam-playground"></a>
 </h1></div>
-<p>This is a playground of Machine Learning (ML) models as applied to PhenoCam time series, predicting either Gcc values from Daymet climate driver data, or predicting GPP using the same Daymet climate drivers and Gcc as a constraint on phenology (rough stand in for fAPAR). The model architecture is identical in both cases, and relies on an LSTM model basis. As this only serves demonstration purposes, for now, no hyper-parameter tuning is applied (model structure is ad-hoc and can be wasteful on resources).</p>
+<p>This is a playground of Machine Learning (ML) models as applied to PhenoCam time series, predicting either Gcc values from Daymet climate drivers, or predicting GPP using the same Daymet climate drivers and Gcc as a constraint on phenology (rough stand in for fAPAR). The model architecture is identical in both cases, and relies on an LSTM model basis.</p>
+<p>As this only serves demonstration purposes, for now, no hyper-parameter tuning is applied (model structure is ad-hoc and can be wasteful on resources). Other model structures and questions can be answered with this data and I’ll add other examples in due time.</p>
 <div class="section level2">
 <h2 id="use">Use<a class="anchor" aria-label="anchor" href="#use"></a>
 </h2>
@@ -96,7 +97,7 @@
 <h3 id="r-project">R project<a class="anchor" aria-label="anchor" href="#r-project"></a>
 </h3>
 <p>To run the project clone it locally and open the <code>Rproj</code> file in the RStudio IDE.</p>
-<p>Analysis scripts are stored in the <code>analysis</code> folder and should be run in sequence. It is adviced to run the analysis on an accelerated platform (GPU) rather than on CPU. The Dockerfile included with this project sets up a reproducible R environment to run all code (see below).</p>
+<p>Analysis scripts are stored in the <code>analysis</code> folder and should be run in sequence. Where possible, run the analysis on an accelerated platform (GPU) rather than on CPU. The Dockerfile included with this project sets up a reproducible R environment to run all code (see below).</p>
 </div>
 <div class="section level3">
 <h3 id="docker-images">Docker images<a class="anchor" aria-label="anchor" href="#docker-images"></a>
@@ -105,9 +106,10 @@
 <p>The dockerfile included provides a GPU torch setup. You can build this docker image using the below command. This will download the NVIDIA CUDA drivers for GPU support, the tidyverse, rstudio IDE and quarto publishing environment. Note that this setup will require some time to build given the the large downloads involved. Once build locally no further downloads will be required.</p>
 <pre><code># In the main project directory run
 docker build -f Dockerfile -t rocker-torch .</code></pre>
-<p>To spin up a GPU docker image use in the project directory:</p>
+<p>To spin up a GPU docker image use <strong>in the project directory</strong>:</p>
 <pre><code>docker run --gpus all -e PASSWORD="rstudio" -p 5656:8787 -v $(pwd):/workspace rocker-torch</code></pre>
-<p>In any browser use the <a href="http://localhost:5656" class="external-link">http://localhost:5656</a> url to access the docker RStudio Server instance which should be running. The password to the RStudio Server instance is set to <code>rstudio</code> when using the above commands (but can and should be changed if the computer is exposed to a larger institutional network). This is not a secured setup, use a stronger password or a local firewall to avoid abuse.</p>
+<p>In any browser use the <a href="http://localhost:5656" class="external-link">http://localhost:5656</a> url to access the docker RStudio Server instance which should be running.</p>
+<p>The password to the RStudio Server instance is set to <code>rstudio</code> when using the above commands (but can and should be changed if the computer is exposed to a larger institutional network). This is not a secured setup, use a stronger password or a local firewall to avoid abuse.</p>
 <p>Data will be mounted in the docker virtual machine at <code>/workspace</code> and is fully accessible (writing and reading of files on your local file system).</p>
 </div>
 </div>
