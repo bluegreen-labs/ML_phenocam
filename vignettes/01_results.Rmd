@@ -122,6 +122,9 @@ print(p)
 
 In a second step I use the Gcc PhenoCam data as input, together with the climate data, but with GPP as a target. Due to limited overlap between PhenoCam sites and available GPP data no global optimization with an easy 80/20 data split can be applied. Therefore the analysis uses a leave-site-out (cross) validation. The data presented below are the results of the model run for the site mentioned, with this data unseen during model training (training on all remaining data). The same model structure as above is maintained, but only 25 epochs are run (to limit computational cost for the demo).
 
+Agreement between model output and reference data is generally better than the Gcc estimates. Gcc tracks GPP reasonably well, so small changes based upon other environmental factors allow the model to capture much of this variability in GPP.
+
+
 ```{r echo = FALSE, warning = FALSE, message=FALSE}
 # read in the modelled data
 df_fluxes <- readRDS(here::here("data/leave_site_out_output_fluxes.rds"))
