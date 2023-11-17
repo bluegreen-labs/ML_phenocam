@@ -68,6 +68,7 @@ p <- ggplot(df_fluxes) +
 
 print(p)
 ```
+
 #### Baseline correction data
 
 With only the baseline correction things go off the rails, with responses improperly scaling. Additional variables might resolve this (in particular vegetation type), but overall it shows that PhenoCam's non radiometric nature might be an obstacle.
